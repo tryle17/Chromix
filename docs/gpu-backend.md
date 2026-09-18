@@ -175,3 +175,20 @@ Chromium build。早期失败日志保留，最终结果不叠加旧批次数量
 GPU 审计作为第 **11** 套接入 [匹配二进制门禁](fingerprint-acceptance.md)，
 不删除旧十套。仍需匹配新源的 Chromium 编译/运行、真实跨 OS 设备采集与 review；
 完整共用后端级隐私、驱动覆盖、真实切换/故障和物理适配器绑定不在本轮完成声明内。
+
+## Fork 增量：`0195` macOS persona 隐藏 WEBGL_debug_renderer_info（tryle17 fork）
+
+真 Mac Chrome（113+）已整体移除 WEBGL_debug_renderer_info：
+`getSupportedExtensions()` 不再列出该扩展，`getExtension()` 返回 null，
+`UNMASKED_VENDOR_WEBGL`/`UNMASKED_RENDERER_WEBGL`（0x9245/0x9246）抛出
+INVALID_ENUM。上游系列在 macOS persona 下仍暴露该扩展：compatibility 后端
+呈现 Apple 厂商串时，unmasked 通道依然可读，构成"WebGL 厂商不一致"检测面。
+fork 补丁 `0195` 在
+`WebGLRenderingContextBase::ExtensionSupportedAndAllowed()` 单点过滤：
+spoofed persona（`!webgl_real`）且 `uxr-platform`/`uxr-ua-platform` 解析为
+macOS（`MacIntel`/`macos`）时返回 false，扩展枚举、`getExtension()` 与
+`getParameter()` 门禁三路走同一判定。Windows/Linux persona 不受影响
+（真 Windows Chrome 仍带该扩展）。已在自编译 152.0.7977.82 全量构建上验证：
+macOS persona 下 BrowserScan"WebGL 厂商不同"项消失（90%→100%），
+Windows persona 不变（保持 100%）。
+
