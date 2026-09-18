@@ -43,6 +43,27 @@ disabled/invalid seeds and ordinary public mode. Borrowed pixmaps retain their
 native alpha type. The upstream image constructor's own required readback and
 unpremultiplication are unchanged; failed native conversions still fail.
 
+## Fork delta: `0194` LSB-forcing noise (tryle17 fork)
+
+The legacy synthetic 8-bit perturbation in `0020` (getImageData) and `0031`
+(readback/export) keyed its ±1 adjustment on the pixel value itself, so the two
+paths could disagree on identical canvas content and a
+`getImageData → putImageData → toDataURL` round trip was not byte-stable — a
+directly measurable inconsistency. Fork patch `0194` re-keys the hash on
+(seed, absolute position, channel) only and forces the low bit
+(`(v & 0xFE) | bit`) instead of adding ±1: the transform is idempotent, so
+already-noised pixels survive putImageData/drawImage round trips byte-identical,
+and both paths agree for the same content. Gating is unchanged: the noise
+remains `--uxr-synthetic-device-tests` opt-in and stays suppressed under the
+native GPU policy. Values still differ from stock Chrome for identical content,
+so exactness probes can still tell that noise is present; ordinary launches
+keep it off.
+
+Numbering note: upstream `main` (the Chromium 153 line) now uses `0193`–`0213`
+for its display/widget series. Rebasing this fork onto that line requires
+renumbering the fork-only patches (`0192`/`0194`/`0195`), which sit on the
+`152.0.7977.82` base where those numbers are free.
+
 ## Native Upload And Readback Repair (2026-09-14)
 
 The source series now includes `0149` and `0150`. They repair native pixel

@@ -191,3 +191,4 @@ patches/0189-restricted-font-last-resort-mac.patch
 patches/0190-restricted-local-font-enumeration.patch
 patches/0191-snapshot-utf8-font-families.patch
 patches/0192-content-browser-client-hints-device-memory-uxr.patch
+patches/0194-canvas-lsb-idempotent-noise.patch
